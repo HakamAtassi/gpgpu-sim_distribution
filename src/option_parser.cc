@@ -194,33 +194,43 @@ class OptionParser {
     OptionRegistry<T> *p_option =
         new OptionRegistry<T>(optionName, optionDesc, optionVariable);
     m_optionReg.push_back(p_option);
-    m_optionMap[optionName] = p_option;
+    m_optionMap.insert({optionName, p_option});  // multimap allows duplicates  
     p_option->assignDefault(optionDefault);
   }
 
   void ParseCommandLine(int argc, const char *const argv[]) {
     for (int i = 1; i < argc; i++) {
-      OptionMap::iterator i_option;
+      auto i_option = m_optionMap.equal_range(argv[i]);
+
       bool optionFound = false;
 
-      i_option = m_optionMap.find(argv[i]);
-      if (i_option != m_optionMap.end()) {
+      i_option = m_optionMap.equal_range(argv[i]);
+
+      if (i_option.first != i_option.second) {  // found a hit
+
         const char *argstr = (i + 1 < argc) ? argv[i + 1] : "";
-        OptionRegistryInterface *p_option = i_option->second;
-        if (p_option->isFlag()) {
-          if (p_option->fromString(argstr) == true) {
-            i += 1;
+
+        for (auto it = i_option.first; it != i_option.second; ++it) {
+
+          OptionRegistryInterface *p_option = it->second;
+          
+          if (p_option->isFlag()) {
+            if (p_option->fromString(argstr) == true) {
+              //i += 1;
+            }
+          } else {
+            if (p_option->fromString(argstr) == false) {
+              fprintf(stderr,
+                      "\n\nGPGPU-Sim ** ERROR: Cannot parse value '%s' for "
+                      "option '%s'.\n",
+                      argstr, argv[i]);
+              exit(1);
+            }
+
           }
-        } else {
-          if (p_option->fromString(argstr) == false) {
-            fprintf(stderr,
-                    "\n\nGPGPU-Sim ** ERROR: Cannot parse value '%s' for "
-                    "option '%s'.\n",
-                    argstr, argv[i]);
-            exit(1);
-          }
-          i += 1;
         }
+
+        i += 1;
         optionFound = true;
       } else if (string(argv[i]) == "-config") {
         if (i + 1 >= argc) {
@@ -342,7 +352,7 @@ class OptionParser {
  private:
   typedef list<OptionRegistryInterface *> OptionCollection;
   OptionCollection m_optionReg;
-  typedef map<string, OptionRegistryInterface *> OptionMap;
+  typedef multimap<string, OptionRegistryInterface *> OptionMap;
   OptionMap m_optionMap;
 };
 
