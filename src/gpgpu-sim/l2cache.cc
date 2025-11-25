@@ -304,18 +304,22 @@ void memory_partition_unit::simple_dram_model_cycle() {
 }
 
 void memory_partition_unit::dram_cycle() {
+  //printf("inside dram_cycle()\n"); fflush(stdout);
   // pop completed memory request from dram and push it to dram-to-L2 queue
   // of the original sub partition
   mem_fetch *mf_return = m_dram->return_queue_top();
   if (mf_return) {
+
     unsigned dest_global_spid = mf_return->get_sub_partition_id();
     int dest_spid = global_sub_partition_id_to_local_id(dest_global_spid);
+
     assert(m_sub_partition[dest_spid]->get_id() == dest_global_spid);
     if (!m_sub_partition[dest_spid]->dram_L2_queue_full()) {
       if (mf_return->get_access_type() == L1_WRBK_ACC) {
         m_sub_partition[dest_spid]->set_done(mf_return);
         delete mf_return;
       } else {
+
         m_sub_partition[dest_spid]->dram_L2_queue_push(mf_return);
         mf_return->set_status(IN_PARTITION_DRAM_TO_L2_QUEUE,
                               m_gpu->gpu_sim_cycle + m_gpu->gpu_tot_sim_cycle);
@@ -329,6 +333,7 @@ void memory_partition_unit::dram_cycle() {
   } else {
     m_dram->return_queue_pop();
   }
+
 
   m_dram->cycle();
   m_dram->dram_log(SAMPLELOG);
@@ -428,7 +433,7 @@ memory_sub_partition::memory_sub_partition(unsigned sub_partition_id,
   m_gpu = gpu;
   m_memcpy_cycle_offset = 0;
 
-  assert(m_id < m_config->m_n_mem_sub_partition);
+  //assert(m_id < m_config->m_n_mem_sub_partition);
 
   char L2c_name[32];
   snprintf(L2c_name, 32, "L2_bank_%03d", m_id);

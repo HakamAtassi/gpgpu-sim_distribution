@@ -92,10 +92,28 @@ new_addr_type linear_to_raw_address_translation::partition_address(
   }
 }
 
+#include "global_vars.h"
+#include <random>
+//extern json custom_memory_stats;
+
+#include <random>
+
+int my_rand() {
+    static std::mt19937 rng(std::random_device{}());
+    static std::uniform_int_distribution<int> dist(0, RAND_MAX);
+    return dist(rng);
+}
+
+
 void linear_to_raw_address_translation::addrdec_tlx(new_addr_type addr,
                                                     addrdec_t *tlx) const {
+
   unsigned long long int addr_for_chip, rest_of_addr, rest_of_addr_high_bits;
   if (!gap) {
+
+    //int current_access = custom_memory_stats[derived_kernel_id]["channel_accesses"][tlx->chip];
+    //custom_memory_stats[derived_kernel_id]["channel_accesses"][tlx->chip]=current_access+1;
+
     tlx->chip = addrdec_packbits(addrdec_mask[CHIP], addr, addrdec_mkhigh[CHIP],
                                  addrdec_mklow[CHIP]);
     tlx->bk = addrdec_packbits(addrdec_mask[BK], addr, addrdec_mkhigh[BK],
@@ -108,6 +126,8 @@ void linear_to_raw_address_translation::addrdec_tlx(new_addr_type addr,
                                   addrdec_mkhigh[BURST], addrdec_mklow[BURST]);
     rest_of_addr_high_bits =
         (addr >> (ADDR_CHIP_S + (log2channel + log2sub_partition)));
+
+
 
   } else {
     // Split the given address at ADDR_CHIP_S into (MSBs,LSBs)
@@ -158,6 +178,9 @@ void linear_to_raw_address_translation::addrdec_tlx(new_addr_type addr,
       tlx->sub_partition = sub_partition;
       assert(tlx->chip < m_n_channel);
       assert(tlx->sub_partition < m_n_channel * m_n_sub_partition_in_channel);
+
+      channel_access[tlx->chip]++;
+
       return;
       break;
     }
@@ -169,7 +192,7 @@ void linear_to_raw_address_translation::addrdec_tlx(new_addr_type addr,
           address_random_interleaving.find(chip_address);
       if (got == address_random_interleaving.end()) {
         unsigned new_chip_id =
-            rand() % (m_n_channel * m_n_sub_partition_in_channel);
+            my_rand() % (m_n_channel * m_n_sub_partition_in_channel);
         address_random_interleaving[chip_address] = new_chip_id;
         tlx->chip = new_chip_id / m_n_sub_partition_in_channel;
         tlx->sub_partition = new_chip_id;
@@ -178,6 +201,9 @@ void linear_to_raw_address_translation::addrdec_tlx(new_addr_type addr,
         tlx->chip = new_chip_id / m_n_sub_partition_in_channel;
         tlx->sub_partition = new_chip_id;
       }
+
+
+      channel_access[tlx->chip]++;
 
       assert(tlx->chip < m_n_channel);
       assert(tlx->sub_partition < m_n_channel * m_n_sub_partition_in_channel);
@@ -192,6 +218,8 @@ void linear_to_raw_address_translation::addrdec_tlx(new_addr_type addr,
       assert("\nUndefined set index function.\n" && 0);
       break;
   }
+
+
 
   // combine the chip address and the lower bits of DRAM bank address to form
   // the subpartition ID

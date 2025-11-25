@@ -58,10 +58,16 @@
 mem_fetch *shader_core_mem_fetch_allocator::alloc(
     new_addr_type addr, mem_access_type type, unsigned size, bool wr,
     unsigned long long cycle, unsigned long long streamID) const {
+
+
   mem_access_t access(type, addr, size, wr, m_memory_config->gpgpu_ctx);
+
+
   mem_fetch *mf = new mem_fetch(
       access, NULL, streamID, wr ? WRITE_PACKET_SIZE : READ_PACKET_SIZE, -1,
       m_core_id, m_cluster_id, m_memory_config, cycle);
+
+
   return mf;
 }
 
@@ -170,6 +176,7 @@ void shader_core_ctx::create_front_pipeline() {
   } else {
     m_icnt = new shader_memory_interface(this, m_cluster);
   }
+
   m_mem_fetch_allocator =
       new shader_core_mem_fetch_allocator(m_sid, m_tpc, m_memory_config);
 
@@ -473,10 +480,21 @@ shader_core_ctx::shader_core_ctx(class gpgpu_sim *gpu,
                                  const memory_config *mem_config,
                                  shader_core_stats *stats)
     : core_t(gpu, NULL, config->warp_size, config->n_thread_per_shader),
-      m_barriers(this, config->max_warps_per_shader, config->max_cta_per_core,
-                 config->max_barriers_per_cta, config->warp_size),
+
+
       m_active_warps(0),
       m_dynamic_warp_id(0) {
+
+
+      //printf("initing shader_core_ctx\n"); fflush(stdout);
+      //printf("dumping shader ctx %0d \n", config->max_warps_per_shader); fflush(stdout);
+      //printf("dumping shader ctx %0d \n", config->max_cta_per_core); fflush(stdout);
+      m_barriers = barrier_set_t(this, config->max_warps_per_shader, config->max_cta_per_core, config->max_barriers_per_cta, config->warp_size);
+
+
+
+
+
   m_cluster = cluster;
   m_config = config;
   m_memory_config = mem_config;
@@ -3785,6 +3803,9 @@ barrier_set_t::barrier_set_t(shader_core_ctx *shader,
   m_max_barriers_per_cta = max_barriers_per_cta;
   m_warp_size = warp_size;
   m_shader = shader;
+
+  //printf("compare: %0d > %0d? \n", max_warps_per_core, WARP_PER_CTA_MAX);
+
   if (max_warps_per_core > WARP_PER_CTA_MAX) {
     printf(
         "ERROR ** increase WARP_PER_CTA_MAX in shader.h from %u to >= %u or "
@@ -4458,6 +4479,7 @@ void opndcoll_rfu_t::collector_unit_t::dispatch() {
 }
 
 void exec_simt_core_cluster::create_shader_core_ctx() {
+  printf("ASDFASDFAS\n"); fflush(stdout);
   m_core = new shader_core_ctx *[m_config->n_simt_cores_per_cluster];
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++) {
     unsigned sid = m_config->cid_to_sid(i, m_cluster_id);
@@ -4472,6 +4494,10 @@ simt_core_cluster::simt_core_cluster(class gpgpu_sim *gpu, unsigned cluster_id,
                                      const memory_config *mem_config,
                                      shader_core_stats *stats,
                                      class memory_stats_t *mstats) {
+
+
+                                      //printf("initing simt core cluster \n"); fflush(stdout);
+                                      //printf("TEST: %0d \n", config->max_warps_per_shader);
   m_config = config;
   m_cta_issue_next_core = m_config->n_simt_cores_per_cluster -
                           1;  // this causes first launch to use hw cta 0
@@ -4575,8 +4601,8 @@ unsigned simt_core_cluster::issue_block2core() {
 
   unsigned num_blocks_issued = 0;
   for (unsigned i = 0; i < m_config->n_simt_cores_per_cluster; i++) {
-    unsigned core =
-        (i + m_cta_issue_next_core + 1) % m_config->n_simt_cores_per_cluster;
+
+    unsigned core = (i + m_cta_issue_next_core + 1) % m_config->n_simt_cores_per_cluster;
 
     if (m_core[core]->pending_ctas.size() > 0) {
       kernel_info_t *pending_cta = m_core[core]->pending_ctas.front();
@@ -4731,6 +4757,7 @@ void sst_simt_core_cluster::icnt_inject_request_packet_to_SST(
 }
 
 void simt_core_cluster::icnt_cycle() {
+
   if (!m_response_fifo.empty()) {
     mem_fetch *mf = m_response_fifo.front();
     unsigned cid = m_config->sid_to_cid(mf->get_sid());
@@ -4744,11 +4771,15 @@ void simt_core_cluster::icnt_cycle() {
       // data response
       if (!m_core[cid]->ldst_unit_response_buffer_full()) {
         m_response_fifo.pop_front();
+        
         m_memory_stats->memlatstat_read_done(mf);
+
         m_core[cid]->accept_ldst_unit_response(mf);
       }
     }
   }
+
+
   if (m_response_fifo.size() < m_config->n_simt_ejection_buffer_size) {
     mem_fetch *mf = (mem_fetch *)::icnt_pop(m_cluster_id);
     if (!mf) return;

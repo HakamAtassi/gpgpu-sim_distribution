@@ -56,27 +56,27 @@ memory_stats_t::memory_stats_t(unsigned n_shader,
   unsigned i, j;
 
   concurrent_row_access =
-      (unsigned int **)calloc(mem_config->m_n_mem, sizeof(unsigned int *));
+      (unsigned int **)calloc(mem_config->m_n_mem+HBM_m_memory_config.m_n_mem, sizeof(unsigned int *));
   num_activates =
-      (unsigned int **)calloc(mem_config->m_n_mem, sizeof(unsigned int *));
+      (unsigned int **)calloc(mem_config->m_n_mem+HBM_m_memory_config.m_n_mem, sizeof(unsigned int *));
   row_access =
-      (unsigned int **)calloc(mem_config->m_n_mem, sizeof(unsigned int *));
+      (unsigned int **)calloc(mem_config->m_n_mem+HBM_m_memory_config.m_n_mem, sizeof(unsigned int *));
   max_conc_access2samerow =
-      (unsigned int **)calloc(mem_config->m_n_mem, sizeof(unsigned int *));
+      (unsigned int **)calloc(mem_config->m_n_mem+HBM_m_memory_config.m_n_mem, sizeof(unsigned int *));
   max_servicetime2samerow =
-      (unsigned int **)calloc(mem_config->m_n_mem, sizeof(unsigned int *));
+      (unsigned int **)calloc(mem_config->m_n_mem+HBM_m_memory_config.m_n_mem, sizeof(unsigned int *));
 
-  for (unsigned i = 0; i < mem_config->m_n_mem; i++) {
+  for (unsigned i = 0; i < mem_config->m_n_mem+HBM_m_memory_config.m_n_mem; i++) {
     concurrent_row_access[i] =
-        (unsigned int *)calloc(mem_config->nbk, sizeof(unsigned int));
+        (unsigned int *)calloc(mem_config->nbk+HBM_m_memory_config.nbk, sizeof(unsigned int));
     row_access[i] =
-        (unsigned int *)calloc(mem_config->nbk, sizeof(unsigned int));
+        (unsigned int *)calloc(mem_config->nbk+HBM_m_memory_config.nbk, sizeof(unsigned int));
     num_activates[i] =
-        (unsigned int *)calloc(mem_config->nbk, sizeof(unsigned int));
+        (unsigned int *)calloc(mem_config->nbk+HBM_m_memory_config.nbk, sizeof(unsigned int));
     max_conc_access2samerow[i] =
-        (unsigned int *)calloc(mem_config->nbk, sizeof(unsigned int));
+        (unsigned int *)calloc(mem_config->nbk+HBM_m_memory_config.nbk, sizeof(unsigned int));
     max_servicetime2samerow[i] =
-        (unsigned int *)calloc(mem_config->nbk, sizeof(unsigned int));
+        (unsigned int *)calloc(mem_config->nbk+HBM_m_memory_config.nbk, sizeof(unsigned int));
   }
 
   m_n_shader = n_shader;
@@ -110,19 +110,20 @@ memory_stats_t::memory_stats_t(unsigned n_shader,
   num_mfs = 0;
   printf("*** Initializing Memory Statistics ***\n");
   totalbankreads =
-      (unsigned int **)calloc(mem_config->m_n_mem, sizeof(unsigned int *));
+      (unsigned int **)calloc(mem_config->m_n_mem+HBM_m_memory_config.m_n_mem, sizeof(unsigned int *));
   totalbankwrites =
-      (unsigned int **)calloc(mem_config->m_n_mem, sizeof(unsigned int *));
+      (unsigned int **)calloc(mem_config->m_n_mem+HBM_m_memory_config.m_n_mem, sizeof(unsigned int *));
   totalbankaccesses =
-      (unsigned int **)calloc(mem_config->m_n_mem, sizeof(unsigned int *));
+      (unsigned int **)calloc(mem_config->m_n_mem+HBM_m_memory_config.m_n_mem, sizeof(unsigned int *));
+
   mf_total_lat_table = (unsigned long long int **)calloc(
-      mem_config->m_n_mem, sizeof(unsigned long long *));
+      mem_config->m_n_mem+HBM_m_memory_config.m_n_mem, sizeof(unsigned long long *));
   mf_max_lat_table =
-      (unsigned **)calloc(mem_config->m_n_mem, sizeof(unsigned *));
+      (unsigned **)calloc(mem_config->m_n_mem+HBM_m_memory_config.m_n_mem, sizeof(unsigned *));
   bankreads = (unsigned int ***)calloc(n_shader, sizeof(unsigned int **));
   bankwrites = (unsigned int ***)calloc(n_shader, sizeof(unsigned int **));
   num_MCBs_accessed = (unsigned int *)calloc(
-      mem_config->m_n_mem * mem_config->nbk, sizeof(unsigned int));
+      (mem_config->m_n_mem+HBM_m_memory_config.m_n_mem) * (mem_config->nbk+HBM_m_memory_config.nbk), sizeof(unsigned int));
   if (mem_config->gpgpu_frfcfs_dram_sched_queue_size) {
     position_of_mrq_chosen = (unsigned int *)calloc(
         mem_config->gpgpu_frfcfs_dram_sched_queue_size, sizeof(unsigned int));
@@ -130,27 +131,27 @@ memory_stats_t::memory_stats_t(unsigned n_shader,
     position_of_mrq_chosen = (unsigned int *)calloc(1024, sizeof(unsigned int));
   for (i = 0; i < n_shader; i++) {
     bankreads[i] =
-        (unsigned int **)calloc(mem_config->m_n_mem, sizeof(unsigned int *));
+        (unsigned int **)calloc(mem_config->m_n_mem+HBM_m_memory_config.m_n_mem, sizeof(unsigned int *));
     bankwrites[i] =
-        (unsigned int **)calloc(mem_config->m_n_mem, sizeof(unsigned int *));
-    for (j = 0; j < mem_config->m_n_mem; j++) {
+        (unsigned int **)calloc(mem_config->m_n_mem+HBM_m_memory_config.m_n_mem, sizeof(unsigned int *));
+    for (j = 0; j < mem_config->m_n_mem+HBM_m_memory_config.m_n_mem; j++) {
       bankreads[i][j] =
-          (unsigned int *)calloc(mem_config->nbk, sizeof(unsigned int));
+          (unsigned int *)calloc(mem_config->nbk+HBM_m_memory_config.nbk, sizeof(unsigned int));
       bankwrites[i][j] =
-          (unsigned int *)calloc(mem_config->nbk, sizeof(unsigned int));
+          (unsigned int *)calloc(mem_config->nbk+HBM_m_memory_config.nbk, sizeof(unsigned int));
     }
   }
 
-  for (i = 0; i < mem_config->m_n_mem; i++) {
+  for (i = 0; i < mem_config->m_n_mem+HBM_m_memory_config.m_n_mem; i++) {
     totalbankreads[i] =
-        (unsigned int *)calloc(mem_config->nbk, sizeof(unsigned int));
+        (unsigned int *)calloc(mem_config->nbk+HBM_m_memory_config.nbk, sizeof(unsigned int));
     totalbankwrites[i] =
-        (unsigned int *)calloc(mem_config->nbk, sizeof(unsigned int));
+        (unsigned int *)calloc(mem_config->nbk+HBM_m_memory_config.nbk, sizeof(unsigned int));
     totalbankaccesses[i] =
-        (unsigned int *)calloc(mem_config->nbk, sizeof(unsigned int));
+        (unsigned int *)calloc(mem_config->nbk+HBM_m_memory_config.nbk, sizeof(unsigned int));
     mf_total_lat_table[i] = (unsigned long long int *)calloc(
-        mem_config->nbk, sizeof(unsigned long long int));
-    mf_max_lat_table[i] = (unsigned *)calloc(mem_config->nbk, sizeof(unsigned));
+        mem_config->nbk+HBM_m_memory_config.nbk, sizeof(unsigned long long int));
+    mf_max_lat_table[i] = (unsigned *)calloc(mem_config->nbk+HBM_m_memory_config.nbk, sizeof(unsigned));
   }
 
   mem_access_type_stats =
@@ -158,10 +159,10 @@ memory_stats_t::memory_stats_t(unsigned n_shader,
   for (i = 0; i < NUM_MEM_ACCESS_TYPE; i++) {
     int j;
     mem_access_type_stats[i] =
-        (unsigned **)calloc(mem_config->m_n_mem, sizeof(unsigned *));
-    for (j = 0; (unsigned)j < mem_config->m_n_mem; j++) {
+        (unsigned **)calloc(mem_config->m_n_mem+HBM_m_memory_config.m_n_mem, sizeof(unsigned *));
+    for (j = 0; (unsigned)j < mem_config->m_n_mem+HBM_m_memory_config.m_n_mem; j++) {
       mem_access_type_stats[i][j] =
-          (unsigned *)calloc((mem_config->nbk + 1), sizeof(unsigned *));
+          (unsigned *)calloc((mem_config->nbk+HBM_m_memory_config.nbk + 1), sizeof(unsigned *));
     }
   }
 
@@ -172,17 +173,17 @@ memory_stats_t::memory_stats_t(unsigned n_shader,
   L2_write_hit = 0;
 
   L2_cbtoL2length =
-      (unsigned int *)calloc(mem_config->m_n_mem, sizeof(unsigned int));
+      (unsigned int *)calloc(mem_config->m_n_mem+HBM_m_memory_config.m_n_mem, sizeof(unsigned int));
   L2_cbtoL2writelength =
-      (unsigned int *)calloc(mem_config->m_n_mem, sizeof(unsigned int));
+      (unsigned int *)calloc(mem_config->m_n_mem+HBM_m_memory_config.m_n_mem, sizeof(unsigned int));
   L2_L2tocblength =
-      (unsigned int *)calloc(mem_config->m_n_mem, sizeof(unsigned int));
+      (unsigned int *)calloc(mem_config->m_n_mem+HBM_m_memory_config.m_n_mem, sizeof(unsigned int));
   L2_dramtoL2length =
-      (unsigned int *)calloc(mem_config->m_n_mem, sizeof(unsigned int));
+      (unsigned int *)calloc(mem_config->m_n_mem+HBM_m_memory_config.m_n_mem, sizeof(unsigned int));
   L2_dramtoL2writelength =
-      (unsigned int *)calloc(mem_config->m_n_mem, sizeof(unsigned int));
+      (unsigned int *)calloc(mem_config->m_n_mem+HBM_m_memory_config.m_n_mem, sizeof(unsigned int));
   L2_L2todramlength =
-      (unsigned int *)calloc(mem_config->m_n_mem, sizeof(unsigned int));
+      (unsigned int *)calloc(mem_config->m_n_mem+HBM_m_memory_config.m_n_mem, sizeof(unsigned int));
 }
 
 // record the total latency
@@ -230,20 +231,26 @@ void memory_stats_t::memlatstat_read_done(mem_fetch *mf) {
 void memory_stats_t::memlatstat_dram_access(mem_fetch *mf) {
   unsigned dram_id = mf->get_tlx_addr().chip;
   unsigned bank = mf->get_tlx_addr().bk;
+  
   if (m_memory_config->gpgpu_memlatency_stat) {
+
     if (mf->get_is_write()) {
       if (mf->get_sid() < m_n_shader) {  // do not count L2_writebacks here
         bankwrites[mf->get_sid()][dram_id][bank]++;
         shader_mem_acc_log(mf->get_sid(), dram_id, bank, 'w');
       }
-      totalbankwrites[dram_id][bank] +=
-          ceil(mf->get_data_size() / m_memory_config->dram_atom_size);
+      totalbankwrites[dram_id][bank] += ceil(mf->get_data_size() / m_memory_config->dram_atom_size);
     } else {
+
       bankreads[mf->get_sid()][dram_id][bank]++;
+
       shader_mem_acc_log(mf->get_sid(), dram_id, bank, 'r');
-      totalbankreads[dram_id][bank] +=
-          ceil(mf->get_data_size() / m_memory_config->dram_atom_size);
+      totalbankreads[dram_id][bank] += ceil(mf->get_data_size() / m_memory_config->dram_atom_size);
     }
+
+      //totalbankaccesses[dram_id][bank] += ceil(mf->get_data_size() / m_memory_config->dram_atom_size);
+
+
     mem_access_type_stats[mf->get_access_type()][dram_id][bank] +=
         ceil(mf->get_data_size() / m_memory_config->dram_atom_size);
   }
@@ -375,11 +382,13 @@ void memory_stats_t::memlatstat_print(unsigned n_mem, unsigned gpu_mem_n_bk) {
     max_chip_accesses = 0;
     min_bank_accesses = 0xFFFFFFFF;
     min_chip_accesses = 0xFFFFFFFF;
+
+
     printf("number of total memory accesses made:\n");
     for (i = 0; i < n_mem; i++) {
       printf("dram[%d]: ", i);
       for (j = 0; j < gpu_mem_n_bk; j++) {
-        l = totalbankaccesses[i][j];
+        l = totalbankwrites[i][j];
         if (l < min_bank_accesses) min_bank_accesses = l;
         if (l > max_bank_accesses) max_bank_accesses = l;
         k += l;
@@ -412,6 +421,8 @@ void memory_stats_t::memlatstat_print(unsigned n_mem, unsigned gpu_mem_n_bk) {
     min_bank_accesses = 0xFFFFFFFF;
     min_chip_accesses = 0xFFFFFFFF;
     printf("number of total read accesses:\n");
+    
+
     for (i = 0; i < n_mem; i++) {
       printf("dram[%d]: ", i);
       for (j = 0; j < gpu_mem_n_bk; j++) {
@@ -428,6 +439,8 @@ void memory_stats_t::memlatstat_print(unsigned n_mem, unsigned gpu_mem_n_bk) {
       printf("\n");
     }
     printf("total dram reads = %d\n", k);
+
+
     if (min_bank_accesses)
       printf("bank skew: %d/%d = %4.2f\n", max_bank_accesses, min_bank_accesses,
              (float)max_bank_accesses / min_bank_accesses);

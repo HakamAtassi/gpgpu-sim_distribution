@@ -55,6 +55,7 @@ dram_t::dram_t(unsigned int partition_id, const memory_config *config,
   m_config = config;
   m_gpu = gpu;
 
+
   // rowblp
   access_num = 0;
   hits_num = 0;
@@ -154,6 +155,7 @@ dram_t::dram_t(unsigned int partition_id, const memory_config *config,
   n_req_partial = 0;
   ave_mrqs_partial = 0;
   bwutil_partial = 0;
+
 
   if (queue_limit())
     mrqq_Dist = StatCreate("mrqq_length", 1, queue_limit());

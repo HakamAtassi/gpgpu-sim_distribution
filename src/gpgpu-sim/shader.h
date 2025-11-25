@@ -1057,6 +1057,8 @@ class opndcoll_rfu_t {  // operand collector based register file unit
 
 class barrier_set_t {
  public:
+
+  barrier_set_t() = default;
   barrier_set_t(shader_core_ctx *shader, unsigned max_warps_per_core,
                 unsigned max_cta_per_core, unsigned max_barriers_per_cta,
                 unsigned warp_size);
@@ -1520,6 +1522,7 @@ class shader_core_config : public core_config {
   void init() {
     int ntok = sscanf(gpgpu_shader_core_pipeline_opt, "%d:%d",
                       &n_thread_per_shader, &warp_size);
+
     if (ntok != 2) {
       printf(
           "GPGPU-Sim uArch: error while parsing configuration string "
@@ -1549,6 +1552,7 @@ class shader_core_config : public core_config {
 
     delete[] tokd;
 
+
     if (n_thread_per_shader > MAX_THREAD_PER_SM) {
       printf(
           "GPGPU-Sim uArch: Error ** increase MAX_THREAD_PER_SM in "
@@ -1557,6 +1561,7 @@ class shader_core_config : public core_config {
       abort();
     }
     max_warps_per_shader = n_thread_per_shader / warp_size;
+    printf("setting max warps per shader = %0d \n", max_warps_per_shader); fflush(stdout);
     assert(!(n_thread_per_shader % warp_size));
 
     set_pipeline_latency();

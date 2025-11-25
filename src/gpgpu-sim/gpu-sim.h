@@ -135,6 +135,8 @@ enum hw_perf_t {
   HW_TOTAL_STATS
 };
 
+
+
 struct power_config {
   power_config() { m_valid = true; }
   void init() {
@@ -212,6 +214,7 @@ struct power_config {
 
 class memory_config {
  public:
+ memory_config() = default;
   memory_config(gpgpu_context *ctx) {
     m_valid = false;
     gpgpu_dram_timing_opt = NULL;
@@ -301,10 +304,13 @@ class memory_config {
            "Number of DRAM banks must be a perfect multiple of memory sub "
            "partition");
     m_n_mem_sub_partition = m_n_mem * m_n_sub_partition_per_memory_channel;
+
+    total_m_n_mem = not_m_n_mem + m_n_mem;
+
     fprintf(stdout, "Total number of memory sub partition = %u\n",
             m_n_mem_sub_partition);
 
-    m_address_mapping.init(m_n_mem, m_n_sub_partition_per_memory_channel);
+    m_address_mapping.init(total_m_n_mem, m_n_sub_partition_per_memory_channel);
     m_L2_config.init(&m_address_mapping);
 
     m_valid = true;
@@ -335,6 +341,8 @@ class memory_config {
   enum dram_ctrl_t scheduler_type;
   bool gpgpu_memlatency_stat;
   unsigned m_n_mem;
+  unsigned not_m_n_mem;
+  unsigned total_m_n_mem;
   unsigned m_n_sub_partition_per_memory_channel;
   unsigned m_n_mem_sub_partition;
   unsigned gpu_n_mem_per_ctrlr;
@@ -376,6 +384,7 @@ class memory_config {
       bk_tag_length;  // number of bits that define a bank inside a bank group
 
   unsigned nbk;
+  unsigned total_nbk;
 
   bool elimnate_rw_turnaround;
 
@@ -404,6 +413,17 @@ class memory_config {
   gpgpu_context *gpgpu_ctx;
 };
 
+class HBM_memory_config : public memory_config {
+public:
+    using memory_config::memory_config; // inherit constructors if needed
+    HBM_memory_config() = default;
+
+    void reg_options(class OptionParser *opp);
+};
+
+
+#include "global_vars.h"
+
 extern bool g_interactive_debugger_enabled;
 
 class gpgpu_sim_config : public power_config,
@@ -413,9 +433,11 @@ class gpgpu_sim_config : public power_config,
       : m_shader_config(ctx), m_memory_config(ctx) {
     m_valid = false;
     gpgpu_ctx = ctx;
+    HBM_m_memory_config = HBM_memory_config(ctx);
   }
   void reg_options(class OptionParser *opp);
   void init() {
+
     gpu_stat_sample_freq = 10000;
     gpu_runtime_stat_flag = 0;
     sscanf(gpgpu_runtime_stat, "%d:%x", &gpu_stat_sample_freq,
@@ -423,6 +445,8 @@ class gpgpu_sim_config : public power_config,
     m_shader_config.init();
     ptx_set_tex_cache_linesize(m_shader_config.m_L1T_config.get_line_sz());
     m_memory_config.init();
+    HBM_m_memory_config.init();
+
     init_clock_domains();
     power_config::init();
     Trace::init();
@@ -442,6 +466,9 @@ class gpgpu_sim_config : public power_config,
     g_visualizer_filename = strdup(buf);
 
     m_valid = true;
+
+
+    printf("gpgpu_sim end of init max shader per core: %0d \n", m_shader_config.max_warps_per_shader);
   }
   unsigned get_core_freq() const { return core_freq; }
   unsigned num_shader() const { return m_shader_config.num_shader(); }
@@ -475,14 +502,17 @@ class gpgpu_sim_config : public power_config,
   bool m_valid;
   shader_core_config m_shader_config;
   memory_config m_memory_config;
+  //HBM_memory_config HBM_m_memory_config;
   // clock domains - frequency
   double core_freq;
   double icnt_freq;
   double dram_freq;
+  double hbm_freq;
   double l2_freq;
   double core_period;
   double icnt_period;
   double dram_period;
+  double hbm_period;
   double l2_period;
 
   // GPGPU-Sim timing model options
@@ -572,6 +602,8 @@ class watchpoint_event {
   const ptx_thread_info *m_thread;
   const ptx_instruction *m_inst;
 };
+
+
 
 class gpgpu_sim : public gpgpu_t {
  public:
@@ -708,6 +740,7 @@ class gpgpu_sim : public gpgpu_t {
   double core_time;
   double icnt_time;
   double dram_time;
+  double hbm_time;
   double l2_time;
 
   // debug
@@ -803,12 +836,15 @@ class gpgpu_sim : public gpgpu_t {
     m_functional_sim = false;
     m_functional_sim_kernel = NULL;
   }
+
 };
 
 class exec_gpgpu_sim : public gpgpu_sim {
  public:
   exec_gpgpu_sim(const gpgpu_sim_config &config, gpgpu_context *ctx)
       : gpgpu_sim(config, ctx) {
+
+    //printf("exec gpgpu init max shader per core: %0d \n", config.m_shader_config.max_warps_per_shader);
     createSIMTCluster();
   }
 
