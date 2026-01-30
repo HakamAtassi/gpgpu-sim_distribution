@@ -1785,7 +1785,7 @@ void gpgpu_sim::gpu_print_stat(unsigned long long streamID) {
     total_l2_css.clear();
 
     printf("\n========= L2 cache stats =========\n");
-    for (unsigned i = 0; i < m_memory_config->m_n_mem_sub_partition; i++) {
+    for (unsigned i = 0; i < m_memory_config->m_n_mem_sub_partition + HBM_m_memory_config.m_n_mem_sub_partition; i++) {
       m_memory_sub_partition[i]->accumulate_L2cache_stats(l2_stats);
       m_memory_sub_partition[i]->get_L2cache_sub_stats(l2_css);
 
