@@ -340,6 +340,8 @@ void memory_config::reg_options(class OptionParser *opp) {
       opp, "-HBM_gpgpu_n_mem", OPT_UINT32, &not_m_n_mem,
       "number of memory modules (e.g. memory controllers) in gpu", "8");
 
+  num_DRAM_channels = &m_n_mem;
+
   m_address_mapping.addrdec_setoption(opp);
 }
 
@@ -841,6 +843,8 @@ void HBM_memory_config::reg_options(class OptionParser *opp) {
                          &m_n_sub_partition_per_memory_channel,
                          "number of memory subpartition in each memory module",
                          "1");
+
+  num_HBM_channels = &m_n_mem;
 
 
 
@@ -2207,6 +2211,7 @@ unsigned long long g_single_step =
 
 void gpgpu_sim::cycle() {
 
+
   int clock_mask = next_clock_domain();
 
   if (clock_mask & CORE) {
@@ -2476,22 +2481,29 @@ void gpgpu_sim::perf_memcpy_to_gpu(size_t dst_start_addr, size_t count) {
     //== 0);
 
     for (unsigned counter = 0; counter < count; counter += 32) {
-      //printf("counter: %0d \n", counter); fflush(stdout);
       const unsigned wr_addr = dst_start_addr + counter;
       addrdec_t raw_addr;
 
       mem_access_sector_mask_t mask;
 
-      //printf("wr_addr 0x%lx \n", wr_addr); fflush(stdout);
-
       mask.set(wr_addr % 128 / 32);
       m_memory_config->m_address_mapping.addrdec_tlx(wr_addr, &raw_addr);
       //printf("raw_addr partition %0d \n", raw_addr.sub_partition); fflush(stdout);
 
-      const unsigned partition_id = raw_addr.sub_partition / (m_memory_config->m_n_sub_partition_per_memory_channel);
+      int dram_channels = *num_DRAM_channels;
+      int hbm_channels  = *num_HBM_channels;
+      int dram_sub_per_chan = m_memory_config->m_n_sub_partition_per_memory_channel;
+      int hbm_sub_per_chan  = HBM_m_memory_config.m_n_sub_partition_per_memory_channel;
 
-      
-      //printf("performing copy \n"); fflush(stdout);
+      int num_DRAM_sub_partitions = dram_channels * dram_sub_per_chan;
+      int num_HBM_sub_partitions  = hbm_channels  * hbm_sub_per_chan;
+
+      unsigned partition_id = 0;
+      int sub = raw_addr.sub_partition; // assume raw_addr.sub_partition is non-negative
+
+
+      partition_id = chip_id_to_partition(sub);
+
       m_memory_partition_unit[partition_id]->handle_memcpy_to_gpu(
           wr_addr, raw_addr.sub_partition, mask);
 

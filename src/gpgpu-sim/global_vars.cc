@@ -18,7 +18,7 @@ int chip_id_to_partition(int chipID){ // chipID is the sub partition ID
 
     // Case 1: This partition is a DRAM channel
     if (chipID < num_DRAM_subs) {
-        return chipID/2;
+        return chipID/4;
     }else{
 
       int HBM_id = (chipID - num_DRAM_subs)/4;

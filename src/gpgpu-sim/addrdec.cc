@@ -33,6 +33,7 @@
 #include "gpu-sim.h"
 #include "hashing.h"
 #include "global_vars.h"
+#include "stdio.h"
 
 static long int powli(long int x, long int y);
 static unsigned int LOGB2_32(unsigned int v);
@@ -188,6 +189,8 @@ void linear_to_raw_address_translation::addrdec_tlx(new_addr_type addr,
     case RANDOM: {
       // This is an unrealistic hashing using software hashtable
       // we generate a random set for each memory address and save the value in
+
+      //printf("In random allocate \n"); fflush(stdout);
 
 
       new_addr_type chip_address = (addr >> (ADDR_CHIP_S - log2sub_partition));
