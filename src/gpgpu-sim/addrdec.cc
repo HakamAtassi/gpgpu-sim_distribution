@@ -32,6 +32,7 @@
 #include "../option_parser.h"
 #include "gpu-sim.h"
 #include "hashing.h"
+#include "global_vars.h"
 
 static long int powli(long int x, long int y);
 static unsigned int LOGB2_32(unsigned int v);
@@ -187,28 +188,93 @@ void linear_to_raw_address_translation::addrdec_tlx(new_addr_type addr,
     case RANDOM: {
       // This is an unrealistic hashing using software hashtable
       // we generate a random set for each memory address and save the value in
+
+
       new_addr_type chip_address = (addr >> (ADDR_CHIP_S - log2sub_partition));
-      tr1_hash_map<new_addr_type, unsigned>::const_iterator got =
-          address_random_interleaving.find(chip_address);
+      tr1_hash_map<new_addr_type, unsigned>::const_iterator got = address_random_interleaving.find(chip_address);
+
+
+      bool HBM = false;
+
       if (got == address_random_interleaving.end()) {
-        unsigned new_chip_id =
-            my_rand() % (m_n_channel * m_n_sub_partition_in_channel);
+
+        unsigned new_chip_id=0;
+
+        if((*num_DRAM_channels == 0)){  // no HBM channels
+          new_chip_id = my_rand() % ((*num_HBM_channels) * 4); // this generates between 
+
+          tlx->chip = chip_id_to_partition(new_chip_id);
+        }else if((*num_HBM_channels == 0)){
+          new_chip_id = my_rand() % ((*num_DRAM_channels) * 4); // this generates between 
+
+          tlx->chip = chip_id_to_partition(new_chip_id);
+        }
+        else{
+          double p = (double)my_rand() / (double)RAND_MAX;
+          if (p < HBM_m_memory_config.HBM_ratio) { // Allocate in HBM
+              // chip id must be 32-63
+
+              int DRAM_sub_part = (*num_DRAM_channels)*2; // offset by the number of DRAM sub partitions
+              int HBM_sub_part = (my_rand() % ((*num_HBM_channels) * 4));
+
+              new_chip_id = DRAM_sub_part + HBM_sub_part;
+
+              tlx->chip = chip_id_to_partition(new_chip_id); //HBM_sub_part/(4) + (DRAM_sub_part)/2;
+          } 
+          else {  // allocate in DRAM
+              // channel must be 0-31
+              new_chip_id =  (my_rand() % ((*num_DRAM_channels) * 4));
+
+              tlx->chip = chip_id_to_partition(new_chip_id); //new_chip_id / 2;
+          }
+        }
+
+
         address_random_interleaving[chip_address] = new_chip_id;
-        tlx->chip = new_chip_id / m_n_sub_partition_in_channel;
+
+        
+
         tlx->sub_partition = new_chip_id;
+
       } else {
+
         unsigned new_chip_id = got->second;
-        tlx->chip = new_chip_id / m_n_sub_partition_in_channel;
+
+        tlx->chip = chip_id_to_partition(new_chip_id);
+
         tlx->sub_partition = new_chip_id;
+
       }
 
 
       channel_access[tlx->chip]++;
 
-      assert(tlx->chip < m_n_channel);
-      assert(tlx->sub_partition < m_n_channel * m_n_sub_partition_in_channel);
+      assert(tlx->chip < (*num_DRAM_channels + *num_HBM_channels));
+      assert(tlx->sub_partition < ((*num_DRAM_channels)*4 + (*num_HBM_channels)*4));
+
+
       return;
       break;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
     case CUSTOM:
       /* No custom set function implemented */

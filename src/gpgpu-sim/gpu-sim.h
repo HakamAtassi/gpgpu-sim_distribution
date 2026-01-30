@@ -343,6 +343,7 @@ class memory_config {
   unsigned m_n_mem;
   unsigned not_m_n_mem;
   unsigned total_m_n_mem;
+  float HBM_ratio;
   unsigned m_n_sub_partition_per_memory_channel;
   unsigned m_n_mem_sub_partition;
   unsigned gpu_n_mem_per_ctrlr;

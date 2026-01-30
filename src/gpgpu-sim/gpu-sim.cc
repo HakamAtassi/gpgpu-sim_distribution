@@ -87,6 +87,8 @@ class gpgpu_sim_wrapper {};
 // #define MAX(a, b) (((a) > (b)) ? (a) : (b)) //redefined
 bool g_interactive_debugger_enabled = false;
 int derived_kernel_id=0;
+unsigned int* num_DRAM_channels = NULL;
+unsigned int* num_HBM_channels = NULL;
 
 tr1_hash_map<new_addr_type, unsigned> address_random_interleaving;
 
@@ -337,7 +339,6 @@ void memory_config::reg_options(class OptionParser *opp) {
   option_parser_register(
       opp, "-HBM_gpgpu_n_mem", OPT_UINT32, &not_m_n_mem,
       "number of memory modules (e.g. memory controllers) in gpu", "8");
-
 
   m_address_mapping.addrdec_setoption(opp);
 }
@@ -777,6 +778,10 @@ void HBM_memory_config::reg_options(class OptionParser *opp) {
   /////////////////
 
   option_parser_register(
+      opp, "-HBM_ratio", OPT_FLOAT, &HBM_ratio,
+      "number of memory modules (e.g. memory controllers) in gpu", "0.5");
+
+  option_parser_register(
       opp, "-gpgpu_n_mem", OPT_UINT32, &not_m_n_mem,
       "number of memory modules (e.g. memory controllers) in gpu", "8");
 
@@ -836,6 +841,9 @@ void HBM_memory_config::reg_options(class OptionParser *opp) {
                          &m_n_sub_partition_per_memory_channel,
                          "number of memory subpartition in each memory module",
                          "1");
+
+
+
 
 
 

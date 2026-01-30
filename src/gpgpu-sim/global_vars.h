@@ -17,6 +17,9 @@ extern int current_kernel_uid;
 
 extern json custom_memory_stats;
 
+extern unsigned int* num_DRAM_channels;
+extern unsigned int* num_HBM_channels;
+
 
 extern int derived_kernel_id;
 
@@ -24,6 +27,8 @@ extern std::vector<int> channel_access;
 
 extern HBM_memory_config HBM_m_memory_config;
 
+
+extern int chip_id_to_partition(int chipID);
 
 //extern const HBM_memory_config *HBM_m_memory_config;
 
