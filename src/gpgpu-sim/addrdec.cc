@@ -217,7 +217,7 @@ void linear_to_raw_address_translation::addrdec_tlx(new_addr_type addr,
           if (p < HBM_m_memory_config.HBM_ratio) { // Allocate in HBM
               // chip id must be 32-63
 
-              int DRAM_sub_part = (*num_DRAM_channels)*2; // offset by the number of DRAM sub partitions
+              int DRAM_sub_part = (*num_DRAM_channels)*4; // offset by the number of DRAM sub partitions
               int HBM_sub_part = (my_rand() % ((*num_HBM_channels) * 4));
 
               new_chip_id = DRAM_sub_part + HBM_sub_part;
